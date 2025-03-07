@@ -1,0 +1,73 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - authMethod
+    properties:
+      authMethod:
+        type: string
+        enum: [cookies, credentials, api]
+        description: Authentication method to use (cookies, credentials, or api).
+      cookies:
+        type: array
+        description: Twitter cookies for authentication (required for cookies method).
+        items:
+          type: string
+      username:
+        type: string
+        description: Twitter username (required for credentials method).
+      password:
+        type: string
+        description: Twitter password (required for credentials method).
+      email:
+        type: string
+        description: Twitter email (optional for credentials method).
+      twoFactorSecret:
+        type: string
+        description: Two-factor authentication secret (optional for credentials method).
+      apiKey:
+        type: string
+        description: Twitter API key (required for api method).
+      apiSecretKey:
+        type: string
+        description: Twitter API secret key (required for api method).
+      accessToken:
+        type: string
+        description: Twitter access token (required for api method).
+      accessTokenSecret:
+        type: string
+        description: Twitter access token secret (required for api method).
+  commandFunction:
+    # A function that produces the CLI command to start the MCP on stdio.
+    |-
+    config => {
+      const env = {};
+      
+      // Set AUTH_METHOD
+      env.AUTH_METHOD = config.authMethod;
+      
+      // Set appropriate environment variables based on auth method
+      if (config.authMethod === 'cookies') {
+        env.TWITTER_COOKIES = JSON.stringify(config.cookies);
+      } else if (config.authMethod === 'credentials') {
+        env.TWITTER_USERNAME = config.username;
+        env.TWITTER_PASSWORD = config.password;
+        if (config.email) env.TWITTER_EMAIL = config.email;
+        if (config.twoFactorSecret) env.TWITTER_2FA_SECRET = config.twoFactorSecret;
+      } else if (config.authMethod === 'api') {
+        env.TWITTER_API_KEY = config.apiKey;
+        env.TWITTER_API_SECRET_KEY = config.apiSecretKey;
+        env.TWITTER_ACCESS_TOKEN = config.accessToken;
+        env.TWITTER_ACCESS_TOKEN_SECRET = config.accessTokenSecret;
+      }
+      
+      return {
+        command: 'node',
+        args: ['build/index.js'],
+        env
+      };
+    } 

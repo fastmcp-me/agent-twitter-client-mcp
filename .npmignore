@@ -1,0 +1,39 @@
+# Source files
+src/
+
+# Development files
+.env
+.env.example
+.eslintrc
+.eslintignore
+.gitignore
+.git
+.github
+.vscode
+.idea
+*.log
+*.tsbuildinfo
+
+# Test files
+tests/
+jest.config.js
+coverage/
+
+# Temporary files
+node_modules/
+tmp/
+temp/
+
+# Build process
+tsconfig.json
+.travis.yml
+.gitlab-ci.yml
+.github/
+.circleci/
+
+# Misc
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+prompts/

@@ -1,0 +1,74 @@
+{
+  "name": "agent-twitter-client-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for Twitter integration using agent-twitter-client",
+  "main": "build/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "dev": "tsx src/index.ts",
+    "test": "jest",
+    "test:interface": "tsx src/test-interface.ts",
+    "lint": "eslint src/**/*.ts",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run lint && npm test",
+    "version": "npm run lint && git add -A src",
+    "postversion": "git push && git push --tags"
+  },
+  "bin": {
+    "agent-twitter-client-mcp": "build/index.js",
+    "agent-twitter-client-mcp-test": "build/test-interface.js"
+  },
+  "files": [
+    "build/**/*",
+    "docs/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "twitter",
+    "mcp",
+    "model-context-protocol",
+    "agent",
+    "ai",
+    "agent-twitter-client",
+    "claude",
+    "anthropic",
+    "grok"
+  ],
+  "author": "ryanmac",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.6.0",
+    "agent-twitter-client": "^0.0.19",
+    "dotenv": "^16.4.7",
+    "winston": "^3.11.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.11.24",
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "@typescript-eslint/parser": "^7.0.1",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ryanmac/agent-twitter-client-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ryanmac/agent-twitter-client-mcp/issues"
+  },
+  "homepage": "https://github.com/ryanmac/agent-twitter-client-mcp#readme",
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  agent-twitter-client-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agent-twitter-client-mcp
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # Twitter authentication - these should be set in a .env file or through environment variables
+      - AUTH_METHOD=cookies
+      - TWITTER_COOKIES=[]
+      # For username/password auth
+      - TWITTER_USERNAME=
+      - TWITTER_PASSWORD=
+      - TWITTER_EMAIL=
+      - TWITTER_2FA_SECRET=
+      # For API auth
+      - TWITTER_API_KEY=
+      - TWITTER_API_SECRET_KEY=
+      - TWITTER_ACCESS_TOKEN=
+      - TWITTER_ACCESS_TOKEN_SECRET=
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - twitter-network
+
+networks:
+  twitter-network:
+    driver: bridge 
