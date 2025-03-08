@@ -10,9 +10,8 @@ yarn-debug.log
 yarn-error.log
 
 # Build artifacts
-dist
-build
-coverage
+# We need the build directory for the multi-stage build
+# dist
 
 # Environment and configuration
 .env

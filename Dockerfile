@@ -4,14 +4,15 @@ FROM node:18-alpine as builder
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for better caching
 COPY package*.json ./
+COPY tsconfig.json ./
 
 # Install dependencies
 RUN npm ci
 
 # Copy source code
-COPY . .
+COPY src/ ./src/
 
 # Build the application
 RUN npm run build
