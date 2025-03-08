@@ -9,21 +9,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18.x'
-          registry-url: 'https://registry.npmjs.org'
-      
+          node-version: "18.x"
+          registry-url: "https://registry.npmjs.org"
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Build
         run: npm run build
-      
+
       - name: Publish to npm
         run: npm publish
         env:
           # NPM_TOKEN needs to be added to repository secrets
+          # This is used by the npm CLI for authentication
+          # Linter warning can be ignored as this is a valid GitHub Actions secret reference
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

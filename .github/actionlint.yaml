@@ -1,0 +1,8 @@
+self-hosted-runner:
+  # Disable warnings about self-hosted runners
+  labels: off
+
+secrets:
+  # Disable warnings about potentially missing secrets
+  # This is useful when secrets are defined in the GitHub repository but not locally
+  no-match: off
