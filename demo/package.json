@@ -1,0 +1,24 @@
+{
+  "name": "agent-twitter-client-mcp-demo",
+  "version": "1.0.0",
+  "description": "Demo for using agent-twitter-client-mcp to send tweets",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "tweet": "node send-tweet.js",
+    "thread": "node tweet-thread.js"
+  },
+  "keywords": [
+    "twitter",
+    "mcp",
+    "demo"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "agent-twitter-client-mcp": "^0.1.0",
+    "dotenv": "^16.4.7",
+    "readline-sync": "^1.4.10"
+  }
+}
