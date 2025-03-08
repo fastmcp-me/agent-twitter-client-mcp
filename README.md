@@ -9,11 +9,13 @@ A Model Context Protocol (MCP) server that integrates with Twitter using the `ag
 ## Features
 
 - **Authentication Options**:
+
   - Cookie-based authentication (recommended)
   - Username/password authentication
   - Twitter API v2 credentials
 
 - **Tweet Operations**:
+
   - Fetch tweets from users
   - Get specific tweets by ID
   - Search tweets
@@ -22,6 +24,7 @@ A Model Context Protocol (MCP) server that integrates with Twitter using the `ag
   - Like, retweet, and quote tweets
 
 - **User Operations**:
+
   - Get user profiles
   - Follow users
   - Get followers and following lists
@@ -66,6 +69,36 @@ agent-twitter-client-mcp
 npx agent-twitter-client-mcp
 ```
 
+### Port Configuration
+
+By default, the MCP server runs on port 3000. If you need to change this (for example, if you already have an application running on port 3000), you have several options:
+
+#### Option 1: Using Environment Variables
+
+Set the `PORT` environment variable:
+
+```bash
+PORT=3001 npx agent-twitter-client-mcp
+```
+
+#### Option 2: Using Docker Compose
+
+If using Docker Compose, you can configure both the host and container ports in your `.env` file:
+
+```
+# .env file
+MCP_HOST_PORT=3001    # The port on your host machine
+MCP_CONTAINER_PORT=3000  # The port inside the container
+```
+
+Then run:
+
+```bash
+docker-compose up -d
+```
+
+This will map port 3001 on your host to port 3000 in the container, allowing you to access the MCP at http://localhost:3001 while your other application continues to use port 3000.
+
 ### Setup with Claude Desktop
 
 1. Configure Claude Desktop to use this MCP by adding to your config file:
@@ -102,6 +135,7 @@ npx agent-twitter-client-mcp
 ```
 
 To obtain cookies:
+
 1. Log in to Twitter in your browser
 2. Open Developer Tools (F12)
 3. Go to the Application tab > Cookies
@@ -258,6 +292,7 @@ Grok on Twitter has access to real-time Twitter data that even the standalone Gr
 - Real-time events being discussed on the platform
 
 Example:
+
 ```
 Use Grok to analyze the current sentiment around AI on Twitter.
 ```
@@ -333,6 +368,7 @@ Run a health check on the agent-twitter-client-mcp server to diagnose any issues
 ```
 
 The health check will report on:
+
 - Authentication status
 - API connectivity
 - Memory usage
@@ -340,6 +376,7 @@ The health check will report on:
 #### Logging
 
 The server logs to both console and files:
+
 - `error.log`: Contains error-level messages
 - `combined.log`: Contains all log messages
 
@@ -355,28 +392,33 @@ Check these logs for detailed error information.
 ### Setup
 
 1. Clone the repository
+
 ```bash
 git clone https://github.com/ryanmac/agent-twitter-client-mcp.git
 cd agent-twitter-client-mcp
 ```
 
 2. Install dependencies
+
 ```bash
 npm install
 ```
 
 3. Create a `.env` file with configuration:
+
 ```
 AUTH_METHOD=cookies
 TWITTER_COOKIES=["cookie1=value1", "cookie2=value2"]
 ```
 
 4. Build the project
+
 ```bash
 npm run build
 ```
 
 5. Start the server
+
 ```bash
 npm start
 ```
@@ -448,4 +490,4 @@ This will store logs in a `logs` directory in your project folder.
 
 ## License
 
-MIT 
+MIT
