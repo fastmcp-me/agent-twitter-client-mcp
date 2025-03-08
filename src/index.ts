@@ -14,7 +14,7 @@ import { ProfileTools } from './tools/profiles.js';
 import { GrokTools } from './tools/grok.js';
 import { TwitterMcpError, AuthConfig } from './types.js';
 import { performHealthCheck } from './health.js';
-import { logger, logError, logInfo, sanitizeForLogging } from './utils/logger.js';
+import { logError, logInfo, sanitizeForLogging } from './utils/logger.js';
 import dotenv from 'dotenv';
 import http from 'http';
 
@@ -42,7 +42,7 @@ function getAuthConfig(): AuthConfig {
   const authMethod = process.env.AUTH_METHOD || 'cookies';
 
   switch (authMethod) {
-    case 'cookies':
+    case 'cookies': {
       const cookiesStr = process.env.TWITTER_COOKIES;
       if (!cookiesStr) {
         throw new Error('TWITTER_COOKIES environment variable is required for cookie auth');
@@ -51,8 +51,9 @@ function getAuthConfig(): AuthConfig {
         method: 'cookies',
         data: { cookies: JSON.parse(cookiesStr) }
       };
+    }
 
-    case 'credentials':
+    case 'credentials': {
       const username = process.env.TWITTER_USERNAME;
       const password = process.env.TWITTER_PASSWORD;
       if (!username || !password) {
@@ -67,8 +68,9 @@ function getAuthConfig(): AuthConfig {
           twoFactorSecret: process.env.TWITTER_2FA_SECRET
         }
       };
+    }
 
-    case 'api':
+    case 'api': {
       const apiKey = process.env.TWITTER_API_KEY;
       const apiSecretKey = process.env.TWITTER_API_SECRET_KEY;
       const accessToken = process.env.TWITTER_ACCESS_TOKEN;
@@ -85,6 +87,7 @@ function getAuthConfig(): AuthConfig {
           accessTokenSecret
         }
       };
+    }
 
     default:
       throw new Error(`Unsupported auth method: ${authMethod}`);
