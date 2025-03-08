@@ -1,102 +1,36 @@
-name: Build and Publish Docker Image
+name: Docker Build and Publish
 
 on:
   push:
     branches: [main]
     tags: ["v*"]
-  pull_request:
-    branches: [main]
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      id-token: write # Needed for provenance attestation
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Debug - Print GitHub context
-        run: |
-          echo "GitHub Repository: ${{ github.repository }}"
-          echo "GitHub Actor: ${{ github.actor }}"
-          echo "GitHub Ref: ${{ github.ref }}"
-          echo "GitHub Event Name: ${{ github.event_name }}"
-          echo "GitHub Token Permissions: ${{ toJson(github.token_permissions) }}"
-
-      - name: Debug - Check repository visibility
-        run: |
-          echo "Checking repository visibility..."
-          REPO_INFO=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            https://api.github.com/repos/${{ github.repository }})
-          echo "Repository visibility: $(echo $REPO_INFO | jq -r '.visibility')"
-          echo "Repository private: $(echo $REPO_INFO | jq -r '.private')"
-
-          echo "Checking package settings..."
-          PACKAGES_URL="https://api.github.com/orgs/$(echo ${{ github.repository }} | cut -d '/' -f 1)/packages/container/$(echo ${{ github.repository }} | cut -d '/' -f 2)"
-          PACKAGE_INFO=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" $PACKAGES_URL || echo '{"message": "Package not found or no access"}')
-          echo "Package info: $PACKAGE_INFO"
-
-      - name: Debug - Check GHCR access
-        run: |
-          echo "Checking GHCR access..."
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin || echo "Login failed"
-          docker logout ghcr.io
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to the Container registry
-        if: github.event_name != 'pull_request'
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Debug - Verify login status
-        if: github.event_name != 'pull_request'
-        run: |
-          echo "Verifying Docker login status..."
-          docker info
-          cat ~/.docker/config.json || echo "Config file not found"
-
-      - name: Debug - Test simple image push
-        if: github.event_name != 'pull_request'
-        run: |
-          echo "Testing simple image push to GHCR..."
-          # Create a simple test image
-          docker pull hello-world
-          docker tag hello-world ${{ env.REGISTRY }}/${{ github.repository }}:test
-          # Try to push it
-          docker push ${{ env.REGISTRY }}/${{ github.repository }}:test || echo "Simple push failed"
-
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,format=long
-
-      - name: Build and push Docker image
+      - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
