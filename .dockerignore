@@ -9,10 +9,6 @@ npm-debug.log
 yarn-debug.log
 yarn-error.log
 
-# Build artifacts
-# We need the build directory for the multi-stage build
-# dist
-
 # Environment and configuration
 .env
 .env.*
@@ -35,6 +31,7 @@ Thumbs.db
 # Documentation
 docs
 *.md
+!README.md
 LICENSE
 
 # Testing
@@ -42,8 +39,20 @@ test
 __tests__
 *.test.js
 *.spec.js
+*.test.ts
+*.spec.ts
 
 # Docker
 Dockerfile
 docker-compose.yml
-.dockerignore 
+.dockerignore
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+.circleci
+
+# Temporary files
+tmp
+temp 

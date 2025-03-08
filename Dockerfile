@@ -1,5 +1,5 @@
 # Use a Node.js image for building the server
-FROM node:18-alpine as builder
+FROM node:20-alpine AS builder
 
 # Set the working directory in the container
 WORKDIR /app
@@ -8,8 +8,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies without running scripts (to avoid premature build)
+RUN npm ci --ignore-scripts
 
 # Copy source code
 COPY src/ ./src/
@@ -18,7 +18,7 @@ COPY src/ ./src/
 RUN npm run build
 
 # Use a smaller Node.js image for the runtime
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Set the working directory in the runtime image
 WORKDIR /app
@@ -36,6 +36,15 @@ COPY --from=builder /app/build ./build
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
+
+# Add metadata labels
+LABEL org.opencontainers.image.source="https://github.com/ryanmac/agent-twitter-client-mcp"
+LABEL org.opencontainers.image.description="MCP server for Twitter integration using agent-twitter-client"
+LABEL org.opencontainers.image.licenses="MIT"
+
+# Add healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/health || exit 1
 
 # Expose the port
 EXPOSE 3000

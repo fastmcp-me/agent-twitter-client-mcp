@@ -16,6 +16,7 @@ import { TwitterMcpError, AuthConfig } from './types.js';
 import { performHealthCheck } from './health.js';
 import { logger, logError, logInfo, sanitizeForLogging } from './utils/logger.js';
 import dotenv from 'dotenv';
+import http from 'http';
 
 // Load environment variables
 dotenv.config();
@@ -39,7 +40,7 @@ const server = new Server({
 function getAuthConfig(): AuthConfig {
   // Determine auth method
   const authMethod = process.env.AUTH_METHOD || 'cookies';
-  
+
   switch (authMethod) {
     case 'cookies':
       const cookiesStr = process.env.TWITTER_COOKIES;
@@ -50,7 +51,7 @@ function getAuthConfig(): AuthConfig {
         method: 'cookies',
         data: { cookies: JSON.parse(cookiesStr) }
       };
-    
+
     case 'credentials':
       const username = process.env.TWITTER_USERNAME;
       const password = process.env.TWITTER_PASSWORD;
@@ -66,7 +67,7 @@ function getAuthConfig(): AuthConfig {
           twoFactorSecret: process.env.TWITTER_2FA_SECRET
         }
       };
-    
+
     case 'api':
       const apiKey = process.env.TWITTER_API_KEY;
       const apiSecretKey = process.env.TWITTER_API_SECRET_KEY;
@@ -84,7 +85,7 @@ function getAuthConfig(): AuthConfig {
           accessTokenSecret
         }
       };
-    
+
     default:
       throw new Error(`Unsupported auth method: ${authMethod}`);
   }
@@ -103,7 +104,7 @@ try {
 // Define available tools
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   logInfo('Received ListToolsRequest');
-  
+
   return {
     tools: [
       // Tweet tools
@@ -136,7 +137,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['username']
         }
       } as Tool,
-      
+
       {
         name: 'get_tweet_by_id',
         description: 'Fetch a specific tweet by ID',
@@ -151,7 +152,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['id']
         }
       } as Tool,
-      
+
       {
         name: 'search_tweets',
         description: 'Search for tweets by keyword',
@@ -177,7 +178,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['query']
         }
       } as Tool,
-      
+
       {
         name: 'send_tweet',
         description: 'Post a new tweet',
@@ -214,7 +215,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['text']
         }
       } as Tool,
-      
+
       {
         name: 'send_tweet_with_poll',
         description: 'Post a tweet with a poll',
@@ -261,7 +262,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['text', 'poll']
         }
       } as Tool,
-      
+
       {
         name: 'like_tweet',
         description: 'Like a tweet',
@@ -276,7 +277,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['id']
         }
       } as Tool,
-      
+
       {
         name: 'retweet',
         description: 'Retweet a tweet',
@@ -291,7 +292,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['id']
         }
       } as Tool,
-      
+
       {
         name: 'quote_tweet',
         description: 'Quote a tweet',
@@ -328,7 +329,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['text', 'quotedTweetId']
         }
       } as Tool,
-      
+
       // Profile tools
       {
         name: 'get_user_profile',
@@ -344,7 +345,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['username']
         }
       } as Tool,
-      
+
       {
         name: 'follow_user',
         description: 'Follow a Twitter user',
@@ -359,7 +360,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['username']
         }
       } as Tool,
-      
+
       {
         name: 'get_followers',
         description: 'Get a user\'s followers',
@@ -379,7 +380,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['userId']
         }
       } as Tool,
-      
+
       {
         name: 'get_following',
         description: 'Get users a user is following',
@@ -399,7 +400,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['userId']
         }
       } as Tool,
-      
+
       // Grok tools
       {
         name: 'grok_chat',
@@ -429,7 +430,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['message']
         }
       } as Tool,
-      
+
       // Health check tool
       {
         name: 'health_check',
@@ -448,130 +449,130 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request: { params: unknown }) => {
   // Add type assertion for request.params
   const { name, arguments: args } = request.params as { name: string; arguments: unknown };
-  
-  logInfo('Received CallToolRequest', { 
-    tool: name, 
+
+  logInfo('Received CallToolRequest', {
+    tool: name,
     args: sanitizeForLogging(args as Record<string, unknown> || {} as Record<string, unknown>)
   });
-  
+
   try {
     switch (name) {
       // Tweet tools
       case 'get_user_tweets':
         return {
-          content: [{ 
+          content: [{
             type: 'text',
             text: JSON.stringify(await tweetTools.getUserTweets(authConfig, args))
           }] as TextContent[]
         };
-      
+
       case 'get_tweet_by_id':
         return {
-          content: [{ 
+          content: [{
             type: 'text',
             text: JSON.stringify(await tweetTools.getTweetById(authConfig, args))
           }] as TextContent[]
         };
-      
+
       case 'search_tweets':
         return {
-          content: [{ 
+          content: [{
             type: 'text',
             text: JSON.stringify(await tweetTools.searchTweets(authConfig, args))
           }] as TextContent[]
         };
-      
+
       case 'send_tweet':
         return {
-          content: [{ 
+          content: [{
             type: 'text',
             text: JSON.stringify(await tweetTools.sendTweet(authConfig, args))
           }] as TextContent[]
         };
-      
+
       case 'send_tweet_with_poll':
         return {
-          content: [{ 
+          content: [{
             type: 'text',
             text: JSON.stringify(await tweetTools.sendTweetWithPoll(authConfig, args))
           }] as TextContent[]
         };
-      
+
       case 'like_tweet':
         return {
-          content: [{ 
+          content: [{
             type: 'text',
             text: JSON.stringify(await tweetTools.likeTweet(authConfig, args))
           }] as TextContent[]
         };
-      
+
       case 'retweet':
         return {
-          content: [{ 
+          content: [{
             type: 'text',
             text: JSON.stringify(await tweetTools.retweet(authConfig, args))
           }] as TextContent[]
         };
-      
+
       case 'quote_tweet':
         return {
-          content: [{ 
+          content: [{
             type: 'text',
             text: JSON.stringify(await tweetTools.quoteTweet(authConfig, args))
           }] as TextContent[]
         };
-      
+
       // Profile tools
       case 'get_user_profile':
         return {
-          content: [{ 
+          content: [{
             type: 'text',
             text: JSON.stringify(await profileTools.getUserProfile(authConfig, args))
           }] as TextContent[]
         };
-      
+
       case 'follow_user':
         return {
-          content: [{ 
+          content: [{
             type: 'text',
             text: JSON.stringify(await profileTools.followUser(authConfig, args))
           }] as TextContent[]
         };
-      
+
       case 'get_followers':
         return {
-          content: [{ 
+          content: [{
             type: 'text',
             text: JSON.stringify(await profileTools.getFollowers(authConfig, args))
           }] as TextContent[]
         };
-      
+
       case 'get_following':
         return {
-          content: [{ 
+          content: [{
             type: 'text',
             text: JSON.stringify(await profileTools.getFollowing(authConfig, args))
           }] as TextContent[]
         };
-      
+
       // Grok tools
       case 'grok_chat':
         return {
-          content: [{ 
+          content: [{
             type: 'text',
             text: JSON.stringify(await grokTools.grokChat(authConfig, args))
           }] as TextContent[]
         };
-      
+
       // Health check
       case 'health_check':
         return {
-          content: [{ 
+          content: [{
             type: 'text',
             text: JSON.stringify(await performHealthCheck(authConfig))
           }] as TextContent[]
         };
-      
+
       default:
         throw new McpError(
           ErrorCode.MethodNotFound,
@@ -580,11 +581,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request: { params: unknow
     }
   } catch (error) {
     logError(`Error executing tool ${name}`, error, { tool: name });
-    
+
     if (error instanceof McpError) {
       throw error;
     }
-    
+
     if (error instanceof TwitterMcpError) {
       return {
         content: [{
@@ -594,7 +595,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request: { params: unknow
         }] as TextContent[]
       };
     }
-    
+
     throw new McpError(
       ErrorCode.InternalError,
       `Error executing tool ${name}: ${error instanceof Error ? error.message : String(error)}`
@@ -614,18 +615,40 @@ async function startServer() {
     logInfo('Starting Twitter MCP server on stdio transport...');
     await server.connect(transport);
     logInfo('Twitter MCP server running on stdio');
-    
+
     // Perform initial health check
     try {
       const healthStatus = await performHealthCheck(authConfig);
       logInfo('Initial health check completed', { status: healthStatus.status });
-      
+
       if (healthStatus.status === 'unhealthy') {
         logError('Initial health check failed', new Error('Health check returned unhealthy status'), healthStatus.details);
       }
     } catch (error) {
       logError('Initial health check failed with error', error);
     }
+
+    // Start HTTP server for health checks
+    const port = process.env.PORT || 3000;
+    const httpServer = http.createServer(async (req, res) => {
+      if (req.url === '/health') {
+        try {
+          const healthStatus = await performHealthCheck(authConfig);
+          res.writeHead(healthStatus.status === 'healthy' ? 200 : 503, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(healthStatus));
+        } catch (error) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ status: 'unhealthy', error: String(error) }));
+        }
+      } else {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Not found' }));
+      }
+    });
+
+    httpServer.listen(port, () => {
+      logInfo(`HTTP server for health checks running on port ${port}`);
+    });
   } catch (error) {
     logError('Failed to start Twitter MCP server', error);
     process.exit(1);

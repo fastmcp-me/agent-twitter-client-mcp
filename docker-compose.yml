@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   agent-twitter-client-mcp:
@@ -29,7 +29,21 @@ services:
       - ./logs:/app/logs
     networks:
       - twitter-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
 
 networks:
   twitter-network:
-    driver: bridge 
+    driver: bridge
