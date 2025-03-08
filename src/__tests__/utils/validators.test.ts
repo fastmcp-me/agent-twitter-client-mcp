@@ -1,12 +1,12 @@
 import { validateInput, validateMediaData, validatePollOptions } from '../../utils/validators.js';
 import { TwitterMcpError } from '../../types.js';
-import { z } from 'zod';
+import * as zod from 'zod';
 
 describe('Validators', () => {
   describe('validateInput', () => {
-    const schema = z.object({
-      username: z.string().min(1),
-      count: z.number().min(1).max(100).default(20)
+    const schema = zod.object({
+      username: zod.string().min(1),
+      count: zod.number().min(1).max(100).default(20)
     });
 
     test('should validate valid input', () => {
