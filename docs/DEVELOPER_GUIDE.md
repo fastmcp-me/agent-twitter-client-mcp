@@ -145,6 +145,8 @@ This tool enables interaction with Twitter's Grok AI assistant, providing access
 - Conversation history management
 - Citations for information sources
 
+> **Important**: Grok functionality requires [agent-twitter-client v0.0.19](https://github.com/elizaOS/agent-twitter-client/releases/tag/0.0.19) or higher. The current package uses v0.0.18 for basic functionality, but you'll need to upgrade to v0.0.19 to use Grok features.
+
 The implementation directly interfaces with Twitter's internal Grok API endpoints, handling authentication, conversation creation, and response parsing. It supports both new conversations and continuing existing ones via conversation IDs.
 
 #### Grok Implementation Details

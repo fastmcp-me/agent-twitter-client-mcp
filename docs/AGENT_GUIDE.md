@@ -28,6 +28,8 @@ The agent-twitter-client-mcp provides the following tools:
 
 - `grok_chat`: Chat with Grok via Twitter
 
+> **Important**: Grok functionality requires [agent-twitter-client v0.0.19](https://github.com/elizaOS/agent-twitter-client/releases/tag/0.0.19) or higher. If you're using v0.0.18, you'll need to upgrade to use Grok features.
+
 ### Utility Tools
 
 - `health_check`: Check the health of the agent-twitter-client-mcp server

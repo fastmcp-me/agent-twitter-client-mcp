@@ -31,6 +31,7 @@ A Model Context Protocol (MCP) server that integrates with Twitter using the `ag
   - Continue conversations with conversation IDs
   - Get web search results and citations
   - Access Twitter's real-time data through Grok
+  - **Note**: Grok functionality requires [agent-twitter-client v0.0.19](https://github.com/elizaOS/agent-twitter-client/releases/tag/0.0.19) or higher
 
 ## Documentation
 
@@ -316,9 +317,10 @@ If search isn't working:
 
 If Grok functionality isn't working:
 
-1. **Authentication**: Grok requires valid Twitter authentication. Cookie authentication is recommended.
-2. **Rate Limits**: Grok has rate limits (typically 25 messages per 2 hours for non-premium accounts).
-3. **API Changes**: Twitter may change the Grok API endpoints or authentication requirements.
+1. **Version Requirement**: Grok requires [agent-twitter-client v0.0.19](https://github.com/elizaOS/agent-twitter-client/releases/tag/0.0.19) or higher. The current package uses v0.0.18 for basic functionality.
+2. **Authentication**: Grok requires valid Twitter authentication. Cookie authentication is recommended.
+3. **Rate Limits**: Grok has rate limits (typically 25 messages per 2 hours for non-premium accounts).
+4. **API Changes**: Twitter may change the Grok API endpoints or authentication requirements.
 
 ### Server Issues
 
