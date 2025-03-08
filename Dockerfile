@@ -34,7 +34,7 @@ RUN npm ci --omit=dev --ignore-scripts
 COPY --from=builder /app/build ./build
 
 # Copy documentation
-COPY CONTAINER.md README.md ./
+COPY README.md ./
 
 # Set environment variables
 ENV NODE_ENV=production
