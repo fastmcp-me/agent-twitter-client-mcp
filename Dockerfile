@@ -33,6 +33,9 @@ RUN npm ci --omit=dev --ignore-scripts
 # Copy built files from builder stage
 COPY --from=builder /app/build ./build
 
+# Copy documentation
+COPY CONTAINER.md README.md ./
+
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
@@ -41,6 +44,7 @@ ENV PORT=3000
 LABEL org.opencontainers.image.source="https://github.com/ryanmac/agent-twitter-client-mcp"
 LABEL org.opencontainers.image.description="MCP server for Twitter integration using agent-twitter-client"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.documentation="https://github.com/ryanmac/agent-twitter-client-mcp"
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
