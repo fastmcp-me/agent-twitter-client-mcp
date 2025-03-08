@@ -39,6 +39,3 @@ coverage/
 
 # TypeScript cache
 *.tsbuildinfo 
-
-# Prompts directory
-prompts/

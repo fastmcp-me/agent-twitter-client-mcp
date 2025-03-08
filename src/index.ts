@@ -21,6 +21,11 @@ import http from 'http';
 // Load environment variables
 dotenv.config();
 
+// Log command-line arguments and environment variables
+console.log('Command-line arguments:', process.argv);
+console.log('DISABLE_HTTP_SERVER env var:', process.env.DISABLE_HTTP_SERVER);
+console.log('PORT env var:', process.env.PORT);
+
 // Create tools instances
 const tweetTools = new TweetTools();
 const profileTools = new ProfileTools();
@@ -633,25 +638,45 @@ async function startServer() {
 
     // Start HTTP server for health checks
     const port = process.env.PORT || 3000;
-    const httpServer = http.createServer(async (req, res) => {
-      if (req.url === '/health') {
-        try {
-          const healthStatus = await performHealthCheck(authConfig);
-          res.writeHead(healthStatus.status === 'healthy' ? 200 : 503, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(healthStatus));
-        } catch (error) {
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ status: 'unhealthy', error: String(error) }));
-        }
-      } else {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Not found' }));
-      }
-    });
+    console.log(`Attempting to start HTTP server on port ${port}`);
 
-    httpServer.listen(port, () => {
-      logInfo(`HTTP server for health checks running on port ${port}`);
-    });
+    // Check if HTTP server should be disabled
+    const disableHttpServer = process.env.DISABLE_HTTP_SERVER === 'true' ||
+      process.argv.includes('--no-http-server');
+    console.log(`Should HTTP server be disabled? ${disableHttpServer}`);
+
+    if (!disableHttpServer) {
+      const httpServer = http.createServer(async (req, res) => {
+        if (req.url === '/health') {
+          try {
+            const healthStatus = await performHealthCheck(authConfig);
+            res.writeHead(healthStatus.status === 'healthy' ? 200 : 503, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(healthStatus));
+          } catch (error) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ status: 'unhealthy', error: String(error) }));
+          }
+        } else {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Not found' }));
+        }
+      });
+
+      httpServer.on('error', (error: NodeJS.ErrnoException) => {
+        if (error.code === 'EADDRINUSE') {
+          console.error(`Port ${port} is already in use. Please specify a different port using the PORT environment variable.`);
+          logError(`Port ${port} is already in use`, error);
+        } else {
+          logError('HTTP server error', error);
+        }
+      });
+
+      httpServer.listen(port, () => {
+        logInfo(`HTTP server for health checks running on port ${port}`);
+      });
+    } else {
+      console.log('HTTP server is disabled by configuration');
+    }
   } catch (error) {
     logError('Failed to start Twitter MCP server', error);
     process.exit(1);
@@ -669,4 +694,4 @@ process.on('SIGINT', async () => {
 startServer().catch((error) => {
   logError('Error starting Twitter MCP server', error);
   process.exit(1);
-}); 
+});
