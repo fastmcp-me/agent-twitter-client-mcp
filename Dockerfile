@@ -26,10 +26,11 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install production dependencies only
-RUN npm ci --only=production
+# Use --ignore-scripts to prevent running the prepare script which requires tsc
+RUN npm ci --omit=dev --ignore-scripts
 
 # Copy built files from builder stage
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/build ./build
 
 # Set environment variables
 ENV NODE_ENV=production
@@ -39,4 +40,4 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Start the application
-CMD ["node", "dist/index.js"] 
+CMD ["node", "build/index.js"] 
