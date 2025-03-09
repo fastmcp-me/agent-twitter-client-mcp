@@ -1,0 +1,12 @@
+# GitHub Repository Configuration
+# Configuration for new-issue-welcome
+newIssueWelcomeComment: >-
+  Thanks for opening your first issue here! We appreciate your contribution to making this project better.
+
+# Configuration for new-pr-welcome
+newPRWelcomeComment: >-
+  Thanks for opening this pull request! We'll review it as soon as possible.
+
+# Configuration for first-pr-merge
+firstPRMergeComment: >-
+  Congratulations on your first merged pull request! We appreciate your contribution!
