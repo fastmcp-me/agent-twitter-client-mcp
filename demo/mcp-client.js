@@ -163,10 +163,15 @@ export class McpClient {
           console.log("DEBUG: Spawning MCP process");
         }
 
-        this.mcpProcess = spawn("npx", ["agent-twitter-client-mcp"], {
-          env: env,
-          stdio: ["pipe", "pipe", "pipe"],
-        });
+        this.mcpProcess = spawn(
+          "node",
+          ["node_modules/agent-twitter-client-mcp/build/index.js"],
+          {
+            env: env,
+            stdio: ["pipe", "pipe", "pipe"],
+            cwd: process.cwd(), // Use the current working directory
+          }
+        );
 
         if (this.options.debug) {
           console.log(
@@ -177,7 +182,10 @@ export class McpClient {
         // Set up error handling for the process
         this.mcpProcess.on("error", (err) => {
           console.error("ERROR: MCP process error:", err);
-          reject(err);
+          // Don't reject the promise if we're already exiting
+          if (!this.isExiting) {
+            reject(err);
+          }
         });
 
         // Handle stderr output
@@ -295,40 +303,55 @@ export class McpClient {
             );
           }
 
-          // Check if the process exited due to a port conflict
-          if (code === 1 && !this.isExiting) {
-            // Check if we've tried too many ports
-            if (
-              this.currentPort - this.options.port >=
-              this.options.maxPortAttempts * this.options.portIncrement
-            ) {
-              console.error(
-                `ERROR: Tried ${this.options.maxPortAttempts} different ports without success. Giving up.`
-              );
-              reject(
-                new Error(
-                  `Failed to start MCP server after trying ${this.options.maxPortAttempts} different ports`
-                )
-              );
+          // Don't treat exit as an error during normal shutdown
+          if (!this.isExiting) {
+            console.log(`MCP process exited unexpectedly with code ${code}`);
+
+            // Check if the process exited due to a port conflict
+            if (code === 1) {
+              // Check if we've tried too many ports
+              if (
+                this.currentPort - this.options.port >=
+                this.options.maxPortAttempts * this.options.portIncrement
+              ) {
+                console.error(
+                  `ERROR: Tried ${this.options.maxPortAttempts} different ports without success. Giving up.`
+                );
+                reject(
+                  new Error(
+                    `Failed to start MCP server after trying ${this.options.maxPortAttempts} different ports`
+                  )
+                );
+                return;
+              }
+
+              // Try the next port
+              this.currentPort += this.options.portIncrement;
+              if (this.options.debug) {
+                console.log(
+                  `DEBUG: Port conflict detected. Trying port ${this.currentPort}`
+                );
+              }
+
+              // Restart the process with the new port
+              this.restartMcpProcess();
               return;
             }
 
-            // Try the next port
-            this.currentPort += this.options.portIncrement;
-            if (this.options.debug) {
-              console.log(
-                `DEBUG: Port conflict detected. Trying port ${this.currentPort}`
-              );
+            // If we're not already exiting, set the process as null
+            this.mcpProcess = null;
+
+            // Don't reject the promise if we've already resolved it
+            if (this.isReady) {
+              // The server was running but exited unexpectedly
+              // We could try to restart it here if needed
+              if (this.restartAttempts < this.maxRestartAttempts) {
+                console.log("Attempting to restart MCP process...");
+                this.restartMcpProcess();
+              }
+            } else {
+              reject(new Error(`MCP process exited with code ${code}`));
             }
-
-            // Restart the process with the new port
-            this.restartMcpProcess();
-            return;
-          }
-
-          if (code !== 0 && !this.isExiting) {
-            console.error(`ERROR: MCP process exited with code ${code}`);
-            reject(new Error(`MCP process exited with code ${code}`));
           }
         });
 
@@ -576,14 +599,77 @@ export class McpClient {
 
         // Register response handler
         this.responseHandlers.set(requestId.toString(), (response) => {
-          if (response.result) {
-            resolve(response.result);
-          } else if (response.error) {
+          if (this.options.debug) {
+            console.log(
+              "Received response:",
+              JSON.stringify(response, null, 2)
+            );
+          }
+
+          // Check for error in the response content
+          if (
+            response.result &&
+            response.result.content &&
+            response.result.content.length > 0 &&
+            response.result.content[0].isError
+          ) {
+            const errorMessage =
+              response.result.content[0].text || "Unknown error in response";
+            console.error("ERROR: Error sending tweet:", errorMessage);
+            reject(new Error(errorMessage));
+            return;
+          }
+
+          // Check for standard error format
+          if (response.error) {
             console.error(
               "ERROR: Error sending tweet:",
               response.error.message || "Unknown error"
             );
             reject(new Error(response.error.message || "Unknown error"));
+            return;
+          }
+
+          // If we get here, the tweet was sent successfully
+          if (
+            response.result &&
+            response.result.content &&
+            response.result.content.length > 0
+          ) {
+            try {
+              // Try to parse the tweet data from the response
+              const contentText = response.result.content[0].text;
+              if (contentText) {
+                try {
+                  const tweetData = JSON.parse(contentText);
+                  if (tweetData && tweetData.tweet && tweetData.tweet.id) {
+                    if (this.options.debug) {
+                      console.log(
+                        "DEBUG: Successfully parsed tweet data:",
+                        tweetData
+                      );
+                    }
+                    resolve(tweetData.tweet);
+                    return;
+                  }
+                } catch (parseError) {
+                  console.error(
+                    "ERROR: Failed to parse tweet data:",
+                    parseError
+                  );
+                  // Continue with the original response if parsing fails
+                }
+              }
+            } catch (error) {
+              console.error(
+                "ERROR: Exception while processing response:",
+                error
+              );
+              // Continue with the original response if processing fails
+            }
+
+            // If we couldn't extract the tweet data, return the original response
+            resolve(response.result);
           } else {
             console.error("ERROR: Invalid response from MCP server");
             reject(new Error("Invalid response from MCP server"));
@@ -603,18 +689,20 @@ export class McpClient {
    * Stop the MCP client
    */
   stop() {
-    this.isExiting = true;
-
     if (this.options.debug) {
       console.log("DEBUG: Stopping MCP client");
     }
 
-    // Close the readline interface
+    // Clear any pending response handlers
+    this.responseHandlers.clear();
+
+    // Close the readline interface if it exists
     if (this.rl) {
       if (this.options.debug) {
         console.log("DEBUG: Closing readline interface");
       }
       this.rl.close();
+      this.rl = null;
     }
 
     // Kill the MCP process if we started it
@@ -622,14 +710,71 @@ export class McpClient {
       if (this.options.debug) {
         console.log("DEBUG: Killing MCP process");
       }
-      this.mcpProcess.kill();
+
+      // Close stdin before killing to prevent EPIPE errors
+      if (this.mcpProcess.stdin && this.mcpProcess.stdin.writable) {
+        try {
+          this.mcpProcess.stdin.end();
+        } catch (error) {
+          if (this.options.debug) {
+            console.log("DEBUG: Error closing stdin:", error.message);
+          }
+        }
+      }
+
+      try {
+        // Use SIGTERM for a graceful shutdown
+        this.mcpProcess.kill("SIGTERM");
+
+        // Set a timeout to force kill if it doesn't exit gracefully
+        setTimeout(() => {
+          if (this.mcpProcess && !this.mcpProcess.killed) {
+            if (this.options.debug) {
+              console.log("DEBUG: Force killing MCP process with SIGKILL");
+            }
+            try {
+              this.mcpProcess.kill("SIGKILL");
+            } catch (error) {
+              if (this.options.debug) {
+                console.log(
+                  "DEBUG: Error force killing process:",
+                  error.message
+                );
+              }
+            }
+          }
+        }, 1000);
+      } catch (error) {
+        if (this.options.debug) {
+          console.log("DEBUG: Error killing MCP process:", error.message);
+        }
+      }
+
+      // Set up a one-time listener for the exit event
+      this.mcpProcess.once("exit", (code, signal) => {
+        if (this.options.debug) {
+          console.log(
+            `DEBUG: MCP process exited with code ${code} and signal ${signal}`
+          );
+        }
+        this.mcpProcess = null;
+      });
     } else if (this.socket) {
-      // Close the socket if we're connected to an existing server
+      // Close the socket if it exists
       if (this.options.debug) {
         console.log("DEBUG: Closing socket connection");
       }
-      this.socket.destroy();
+      try {
+        this.socket.end();
+        this.socket = null;
+      } catch (error) {
+        if (this.options.debug) {
+          console.log("DEBUG: Error closing socket:", error.message);
+        }
+      }
     }
+
+    return Promise.resolve();
   }
 
   /**
@@ -638,14 +783,53 @@ export class McpClient {
    * @param {Object} request - The request to send
    */
   sendRequest(request) {
-    if (this.options.startServer && this.mcpProcess && this.mcpProcess.stdin) {
-      // Send the request to the MCP process's stdin
-      this.mcpProcess.stdin.write(JSON.stringify(request) + "\n");
-    } else if (this.socket) {
-      // Send the request to the socket
-      this.socket.write(JSON.stringify(request) + "\n");
-    } else {
-      throw new Error("No connection to MCP server available");
+    try {
+      // Validate connection before sending
+      if (
+        this.options.startServer &&
+        this.mcpProcess &&
+        this.mcpProcess.stdin &&
+        this.mcpProcess.stdin.writable
+      ) {
+        // Send the request to the MCP process's stdin
+        try {
+          this.mcpProcess.stdin.write(JSON.stringify(request) + "\n");
+        } catch (writeError) {
+          if (writeError.code === "EPIPE") {
+            console.error(
+              "ERROR: The connection to the MCP process has been closed (EPIPE)."
+            );
+            // Try to restart the MCP process
+            this.restartMcpProcess();
+            throw new Error(
+              "Connection to MCP server lost. Attempting to restart."
+            );
+          } else {
+            throw writeError;
+          }
+        }
+      } else if (this.socket && this.socket.writable) {
+        // Send the request to the socket
+        try {
+          this.socket.write(JSON.stringify(request) + "\n");
+        } catch (writeError) {
+          if (writeError.code === "EPIPE") {
+            console.error(
+              "ERROR: The connection to the MCP socket has been closed (EPIPE)."
+            );
+            throw new Error("Connection to MCP server lost. Please reconnect.");
+          } else {
+            throw writeError;
+          }
+        }
+      } else {
+        throw new Error("No connection to MCP server available");
+      }
+    } catch (error) {
+      if (this.options.debug) {
+        console.error("DEBUG: Error in sendRequest:", error);
+      }
+      throw error;
     }
   }
 }

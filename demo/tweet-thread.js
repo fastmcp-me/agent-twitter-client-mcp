@@ -56,6 +56,7 @@ async function main() {
         } else {
           console.log("Warning: Tweet ID not returned in the response.");
           console.log("Thread may be broken at this point.");
+          console.log("The tweet may not have been sent successfully.");
 
           // Ask if user wants to continue without a proper reply chain
           if (i < threadTweets.length - 1) {
@@ -69,7 +70,15 @@ async function main() {
           }
         }
       } catch (error) {
-        console.error(`Error sending tweet ${i + 1}:`, error.message);
+        console.error(`\nERROR: Failed to send tweet ${i + 1}:`, error.message);
+
+        // Check for character limit error
+        if (error.message.includes("cannot exceed 280 characters")) {
+          console.log("\nThe tweet exceeds Twitter's 280 character limit.");
+          console.log("Current length:", threadTweets[i].length, "characters");
+          console.log("Please edit your tweet to be shorter.");
+        }
+
         if (error.details) {
           console.error(
             "Error details:",

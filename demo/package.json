@@ -19,6 +19,7 @@
   "dependencies": {
     "agent-twitter-client-mcp": "^0.1.0",
     "dotenv": "^16.4.7",
+    "node-fetch": "^3.3.2",
     "readline-sync": "^1.4.10"
   }
 }
