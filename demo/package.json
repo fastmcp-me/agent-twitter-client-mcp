@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node index.js",
     "tweet": "node send-tweet.js",
-    "thread": "node tweet-thread.js"
+    "thread": "node tweet-thread.js",
+    "simple-grok": "node simple-grok.js",
+    "grok-chat": "node grok-chat.js"
   },
   "keywords": [
     "twitter",
