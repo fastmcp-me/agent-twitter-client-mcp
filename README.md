@@ -43,6 +43,8 @@ A Model Context Protocol (MCP) server that integrates with Twitter using the `ag
 - [Agent Guide](docs/AGENT_GUIDE.md) - Guide for AI agents on how to use the Twitter MCP
 - [Contributing Guide](CONTRIBUTING.md) - Guidelines for contributing to this project
 - [Changelog](CHANGELOG.md) - History of changes to this project
+- [Demo README](demo/README.md) - Guide for running the demo scripts
+- [Grok Examples](demo/GROK_EXAMPLES.md) - Documentation for the Grok AI integration examples
 
 ## Quick Start
 
@@ -68,6 +70,28 @@ agent-twitter-client-mcp
 # If installed locally
 npx agent-twitter-client-mcp
 ```
+
+### Demo Scripts
+
+The package includes a `demo` directory with example scripts that demonstrate various features:
+
+```bash
+# Clone the repository to access the demo scripts
+git clone https://github.com/ryanmac/agent-twitter-client-mcp.git
+cd agent-twitter-client-mcp/demo
+
+# Run the interactive demo menu
+./run-demo.sh
+
+# Run a specific demo script
+./run-demo.sh --script tweet-search.js
+
+# Run Grok AI examples (requires agent-twitter-client v0.0.19)
+./run-demo.sh --script simple-grok.js --use-local-agent-twitter-client
+./run-demo.sh --script grok-chat.js --use-local-agent-twitter-client
+```
+
+See the [Demo README](demo/README.md) for more details.
 
 ### Port Configuration
 
@@ -291,11 +315,37 @@ Grok on Twitter has access to real-time Twitter data that even the standalone Gr
 - Information about Twitter users and their content
 - Real-time events being discussed on the platform
 
-Example:
+Example queries:
 
-```
-Use Grok to analyze the current sentiment around AI on Twitter.
-```
+- "What are the trending topics on Twitter right now?"
+- "Analyze the sentiment around AI on Twitter"
+- "What are people saying about the latest Apple event?"
+- "Show me information about popular memecoins being discussed today"
+
+### Grok Authentication Requirements
+
+Grok functionality requires proper authentication. The MCP supports two methods:
+
+1. **Cookie Authentication** (Recommended):
+
+   - Cookies must be in JSON array format
+   - Example: `TWITTER_COOKIES=["auth_token=YOUR_AUTH_TOKEN; Domain=.twitter.com", "ct0=YOUR_CT0_VALUE; Domain=.twitter.com", "twid=u%3DYOUR_USER_ID; Domain=.twitter.com"]`
+   - Essential cookies are `auth_token`, `ct0`, and `twid`
+
+2. **Username/Password Authentication**:
+   - Set `TWITTER_USERNAME` and `TWITTER_PASSWORD` in your environment
+   - May encounter Cloudflare protection in some cases
+
+### Grok Rate Limits
+
+Grok has rate limits that may affect usage:
+
+- Non-premium accounts: 25 messages per 2 hours
+- Premium accounts: Higher limits
+
+The MCP will return rate limit information in the response when limits are reached.
+
+For more details on using Grok, see the [Grok Examples](demo/GROK_EXAMPLES.md) documentation.
 
 ## Troubleshooting
 
@@ -352,10 +402,30 @@ If search isn't working:
 
 If Grok functionality isn't working:
 
-1. **Version Requirement**: Grok requires [agent-twitter-client v0.0.19](https://github.com/elizaOS/agent-twitter-client/releases/tag/0.0.19) or higher. The current package uses v0.0.18 for basic functionality.
-2. **Authentication**: Grok requires valid Twitter authentication. Cookie authentication is recommended.
-3. **Rate Limits**: Grok has rate limits (typically 25 messages per 2 hours for non-premium accounts).
-4. **API Changes**: Twitter may change the Grok API endpoints or authentication requirements.
+1. **Version Requirement**:
+
+   - Grok requires [agent-twitter-client v0.0.19](https://github.com/elizaOS/agent-twitter-client/releases/tag/0.0.19) or higher
+   - The current package uses v0.0.18 for basic functionality
+   - For the demo scripts, use the `--use-local-agent-twitter-client` flag to temporarily install v0.0.19
+
+2. **Authentication Issues**:
+
+   - Cookie Format: Ensure cookies are in the correct JSON array format
+   - Cookie Validity: Twitter cookies expire after a certain period
+   - Cloudflare Protection: Username/password authentication may be blocked by Cloudflare
+   - Premium Requirement: Grok access requires a Twitter Premium subscription
+
+3. **Rate Limits**:
+
+   - Non-premium accounts: 25 messages per 2 hours
+   - Error Message: "Rate Limited: You've reached the limit..."
+   - Solution: Wait until the rate limit resets or upgrade to a premium account
+
+4. **Environment File Location**:
+   - For the demo scripts, make sure your credentials are in `demo/.env`, not in the root `.env` file
+   - Use the `--debug-env` flag to check which environment variables are being loaded
+
+For detailed troubleshooting of Grok issues, see the [Grok Examples](demo/GROK_EXAMPLES.md) documentation.
 
 ### Server Issues
 
