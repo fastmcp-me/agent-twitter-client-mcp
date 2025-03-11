@@ -48,9 +48,11 @@ To enable Grok AI functionality, you need to install version 0.0.19 or higher of
 # First install the MCP package
 npm install agent-twitter-client-mcp
 
-# Then install the latest agent-twitter-client from GitHub
-npm install github:elizaOS/agent-twitter-client#v0.0.19
+# Then install agent-twitter-client v0.0.19 from GitHub using the tar.gz URL
+npm install https://github.com/elizaOS/agent-twitter-client/archive/0.0.19.tar.gz
 ```
+
+> **Note**: The above method is the most reliable way to install v0.0.19. Other methods like `npm install github:elizaOS/agent-twitter-client#v0.0.19` may not work consistently.
 
 Alternatively, you can specify both in your `package.json`:
 
@@ -58,7 +60,7 @@ Alternatively, you can specify both in your `package.json`:
 {
   "dependencies": {
     "agent-twitter-client-mcp": "latest",
-    "agent-twitter-client": "github:elizaOS/agent-twitter-client#v0.0.19"
+    "agent-twitter-client": "https://github.com/elizaOS/agent-twitter-client/archive/0.0.19.tar.gz"
   }
 }
 ```
@@ -481,7 +483,7 @@ const { AdvancedMcpClient } = require("./advanced-mcp-client");
 
 async function grokOperations() {
   // Make sure you've installed agent-twitter-client v0.0.19 or higher
-  // npm install github:elizaOS/agent-twitter-client#v0.0.19
+  // npm install https://github.com/elizaOS/agent-twitter-client/archive/0.0.19.tar.gz
 
   const client = new AdvancedMcpClient({ debug: true });
   await client.start();
@@ -514,7 +516,9 @@ async function grokOperations() {
       console.error(
         "Make sure you have installed agent-twitter-client v0.0.19 or higher:"
       );
-      console.error("npm install github:elizaOS/agent-twitter-client#v0.0.19");
+      console.error(
+        "npm install https://github.com/elizaOS/agent-twitter-client/archive/0.0.19.tar.gz"
+      );
     }
   } finally {
     await client.stop();
@@ -731,7 +735,7 @@ rateLimitedOperations();
    Make sure you've installed the correct version of `agent-twitter-client`:
 
    ```bash
-   npm install github:elizaOS/agent-twitter-client#v0.0.19
+   npm install https://github.com/elizaOS/agent-twitter-client/archive/0.0.19.tar.gz
    ```
 
    You can verify the installed version:
